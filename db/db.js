@@ -22,8 +22,8 @@ const initDB = async () => {
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     author TEXT,
     title TEXT,
-    category TEXT,  -- Store authors as a JSON string
     content TEXT,
+    category TEXT,  -- Store authors as a JSON string
     releaseDate DATE,
     lastmoddate DATE
   );

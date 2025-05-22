@@ -6,10 +6,10 @@ export const getblog = async (req, res) => {
 
   const result = rows.map(row => ({
     id: row.id,
-    author: row.band,
+    author: row.author,
     title: row.title,
-    category: row.category,
     content: row.authors,
+    category: row.category,
     releaseDate: row.releaseDate,
     lastmoddate: row.lastmoddate
   }));
@@ -26,10 +26,10 @@ export const getblogById = async (req, res) => {
 
   res.status(200).json({
     id: row.id,
-    author: row.band,
+    author: row.author,
     title: row.title,
-    category: row.category,
     content: row.authors,
+    category: row.category,
     releaseDate: row.releaseDate,
     lastmoddate: row.lastmoddate
   });
@@ -54,15 +54,15 @@ export const createblog = async (req, res) => {
 
   const result = await db.run(
     "INSERT INTO blogs (author, title, content, category, releaseDate, lastmoddate) VALUES (?, ?, ?, ?,?,?)",
-    [band, title, authors, releaseDate] 
+    [author, title, content,category, releaseDate , lastmoddate] 
   );
 
   res.status(201).json({
     id: result.lastID,
     author,
     title,
-    category,
     content,
+    category,
     releaseDate,
     lastmoddate
   });
@@ -88,7 +88,7 @@ export const updateblog = async (req, res) => {
   // Update the blog in the database
   await db.run(
     "UPDATE blogs SET author = ?, title = ?, content = ?, category = ?, releaseDate = ?, lastmoddate = ? WHERE id = ?",
-    [band,title,authors,releaseDate, id]
+    [author, title, content,category, releaseDate , lastmoddate]
   );
 
   // Return the updated blog data in the response
@@ -96,8 +96,8 @@ export const updateblog = async (req, res) => {
     id: check.lastID,
     author,
     title,
-    category,
     content,
+    category,
     releaseDate,
     lastmoddate
   });

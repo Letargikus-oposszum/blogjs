@@ -8,8 +8,8 @@ const seed = async () => {
     const blog = [
       {author: "Zsombor Papdi",
        title:"Bike Shop",
-       category:"Life",
        content:"Bought a Bike Shop",
+       category:"Life",
        date:"2027-01-03",
        lastmoddate:"2027-03-14"
       },
@@ -19,9 +19,9 @@ const seed = async () => {
     try {
       for (const entry of blog) {
         await db.run(`
-          INSERT INTO blog (band, title, authors, releaseDate)
+          INSERT INTO blog (author, title, content, category, releaseDate, lastmoddate)
           VALUES (?, ?, ?, ?)`, 
-          [entry.band, entry.title, entry.authors, entry.releaseDate]);
+          [entry.author, entry.title, entry.content, entry.category, entry.releaseDate, entry.lastmoddate]);
       }
       console.log("blog seeded successfully!");
     } catch (err) {
