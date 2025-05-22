@@ -8,7 +8,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 // Open the SQLite database
 const dbPromise = open({
-  filename: `${__dirname}/albums.db`,
+  filename: `${__dirname}/blogs.db`,
   driver: sqlite3.Database,
 });
 
@@ -16,14 +16,16 @@ const dbPromise = open({
 const initDB = async () => {
   const db = await dbPromise;
   
-  // Create the albums table with proper SQL syntax
+  // Create the blogs table with proper SQL syntax
   await db.exec(`
-  CREATE TABLE IF NOT EXISTS albums (
+  CREATE TABLE IF NOT EXISTS blogs (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    band TEXT,
+    author TEXT,
     title TEXT,
-    authors TEXT,  -- Store authors as a JSON string
-    releaseDate DATE
+    category TEXT,  -- Store authors as a JSON string
+    content TEXT,
+    releaseDate DATE,
+    lastmoddate DATE
   );
   `);
 };
