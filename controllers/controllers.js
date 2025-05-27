@@ -8,7 +8,7 @@ export const getblog = async (req, res) => {
     id: row.id,
     author: row.author,
     title: row.title,
-    content: row.authors,
+    content: row.content,
     category: row.category,
     releaseDate: row.releaseDate,
     lastmoddate: row.lastmoddate
@@ -28,7 +28,7 @@ export const getblogById = async (req, res) => {
     id: row.id,
     author: row.author,
     title: row.title,
-    content: row.authors,
+    content: row.content,
     category: row.category,
     releaseDate: row.releaseDate,
     lastmoddate: row.lastmoddate
@@ -38,15 +38,6 @@ export const getblogById = async (req, res) => {
 export const createblog = async (req, res) => {
   const db = await dbPromise;
   const { author, title, content, category, releaseDate, lastmoddate } = req.body;
-
-  const authorsArray = await db.run("SELECT authors FROM blogs");
-
-  authorsArray.array.forEach(author => {
-      if (author = authors){
-        alert("There can be no blogs with the same name!");
-        //abortolni kellene ezt a függvényt ez után
-      }
-  });
 
   if (!author, !title, !content, !category, !releaseDate, !lastmoddate) {
     return res.status(400).json({ message: "Invalid input something" });
@@ -71,27 +62,23 @@ export const createblog = async (req, res) => {
 
 export const updateblog = async (req, res) => {
   const db = await dbPromise;
-  const id = parseInt(req.params.id);  // Use the database ID from the route params
-  const { author, title, content,category, releaseDate , lastmoddate} = req.body; // Add missing fields
+  const id = parseInt(req.params.id);  
+  const { author, title, content,category, releaseDate , lastmoddate} = req.body;
 
-  // Validate input
   if (!author, !title, !content, !category, !releaseDate, !lastmoddate) {
     return res.status(400).json({ message: "Invalid input something" });
   }
 
-  // Check if the blog with the provided ID exists in the database
   const check = await db.get("SELECT * FROM blogs WHERE id = ?", [id]);
   if (!check) {
     return res.status(404).json({ message: "blog not found" });
   }
 
-  // Update the blog in the database
   await db.run(
     "UPDATE blogs SET author = ?, title = ?, content = ?, category = ?, releaseDate = ?, lastmoddate = ? WHERE id = ?",
-    [author, title, content,category, releaseDate , lastmoddate]
+    [author, title, content, category, releaseDate, lastmoddate, id]
   );
 
-  // Return the updated blog data in the response
   res.status(201).json({
     id: check.lastID,
     author,
@@ -106,18 +93,15 @@ export const updateblog = async (req, res) => {
 
 export const deleteblog = async (req, res) => {
   const db = await dbPromise;
-  const id = parseInt(req.params.id);  // Use the database ID from the route params
+  const id = parseInt(req.params.id);  
 
-  // Check if the blog with the provided ID exists in the database
   const check = await db.get("SELECT * FROM blogs WHERE id = ?", [id]);
   if (!check) {
     return res.status(404).json({ message: "blog not found" });
   }
 
-  // Delete the blog from the database
   await db.run("DELETE FROM blogs WHERE id = ?", [id]);
 
-  // Respond with a success message
   res.status(200).json({ message: "Delete successful" });
 };
 

@@ -1,181 +1,262 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Album Management</title>
-  <link rel="stylesheet" href="index.css">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="stylesheet" href="index.css">
+<title>Blog Manager</title>
 </head>
 <body>
-  <h1>Album Management</h1>
+  <div class="container">
+    <aside class="blog-list">
+      <h2>Blogs</h2>
+      <ul id="blogList">
 
-  <table id="albumList">
-    <thead>
-      <tr>
-        <th>Band</th>
-        <th>Album Title</th>
-        <th>Authors</th>
-        <th>Release Date</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+      </ul>
+      <button id="addNewBtn" style="margin: 10px 20px; padding: 8px 12px; cursor: pointer;">+ Add New Blog</button>
+    </aside>
 
-  <h2>Add a New Album</h2>
-  <form id="addAlbumForm">
-    <input type="text" id="bandInput" placeholder="Band Name" required />
-    <input type="text" id="titleInput" placeholder="Album Title" required />
-    <input type="text" id="authorsInput" placeholder="Authors" required />
-    <input type="date" id="releaseDateInput" placeholder="Release Date" required />
-    <button type="submit">Add Album</button>
-  </form>
-
-  <h2>Edit Album</h2>
-  <form id="editAlbumForm" style="display: none;">
-    <input type="text" id="editBandInput" placeholder="Band Name" required />
-    <input type="text" id="editTitleInput" placeholder="Album Title" required />
-    <input type="text" id="editAuthorsInput" placeholder="Authors" required />
-    <input type="date" id="editReleaseDateInput" required />
-    <button type="submit">Save Changes</button>
-  </form>
+    <section class="blog-details" id="blogDetails">
+      <h2>Select a blog from the list</h2>
+      <p>Details will appear here.</p>
+    </section>
+  </div>
 
   <script>
     const API_URL = 'http://localhost:3000/routes';
-    let editingId = null;
+    let selectedBlogId = null;
 
-    async function loadAlbums() {
-      const response = await fetch(API_URL);
-      const data = await response.json();
+    const blogListElem = document.getElementById('blogList');
+    const blogDetailsElem = document.getElementById('blogDetails');
 
-      const tbody = document.querySelector('#albumList tbody');
-      tbody.innerHTML = '';
+    
+    
+    async function loadBlogs() {
+      try {
+        const res = await fetch(API_URL);
+        if (!res.ok) throw new Error('Failed to fetch blogs');
+        const blogs = await res.json();
+        
+        blogListElem.innerHTML = ''; // Clear existing list
 
-      data.forEach((album) => {
-        const tr = document.createElement('tr');
+        blogs.forEach(blog => {
+          const li = document.createElement('li');
+          li.textContent = blog.title + ' — ' + blog.author;
+          li.dataset.id = blog.id;
 
-        const bandTd = document.createElement('td');
-        bandTd.textContent = album.band;
+          li.addEventListener('click', () => {
+            selectBlog(blog);
+            highlightSelectedBlog(li);
+          });
 
-        const titleTd = document.createElement('td');
-        titleTd.textContent = album.title;
+          blogListElem.appendChild(li);
+        });
 
-        const authorsTd = document.createElement('td');
-        authorsTd.textContent = album.authors;
+      } catch (error) {
+        blogListElem.innerHTML = '<li>Error loading blogs.</li>';
+        console.error(error);
+      }
+    }
 
-        const releaseDateTd = document.createElement('td');
-        releaseDateTd.textContent = album.releaseDate;
+    function highlightSelectedBlog(selectedLi) {
+      const lis = blogListElem.querySelectorAll('li');
+      lis.forEach(li => li.classList.remove('selected'));
+      selectedLi.classList.add('selected');
+    }
 
-        const actionTd = document.createElement('td');
-        const editBtn = document.createElement('button');
-        editBtn.textContent = 'Edit';
-        editBtn.classList.add('edit-btn');
-        editBtn.onclick = () => editAlbum(album.id, album);
+    function selectBlog(blog) {
+      selectedBlogId = blog.id;
+      blogDetailsElem.innerHTML = `
+        <h2>${escapeHtml(blog.title)}</h2>
+        <p><strong>Author:</strong> ${escapeHtml(blog.author)}</p>
+        <p><strong>Category:</strong> ${escapeHtml(blog.category)}</p>
+        <p><strong>Content:</strong><br> ${escapeHtml(blog.content)}</p>
+        <p><strong>Release Date:</strong> ${escapeHtml(blog.releaseDate)}</p>
+        <p><strong>Last Modified:</strong> ${escapeHtml(blog.lastmoddate)}</p>
 
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = 'Delete';
-        deleteBtn.classList.add('delete-btn');
-        deleteBtn.onclick = () => deleteAlbum(album.id);
+        <div class="buttons">
+          <button id="editBtn">Modify</button>
+          <button id="deleteBtn" class="delete-btn">Delete</button>
+          </div>
+      `;
 
-        actionTd.appendChild(editBtn);
-        actionTd.appendChild(deleteBtn);
+    document.getElementById('editBtn').addEventListener('click', () => {
+      showEditForm(blog);
+    });
 
-        tr.appendChild(bandTd);
-        tr.appendChild(titleTd);
-        tr.appendChild(authorsTd);
-        tr.appendChild(releaseDateTd);
-        tr.appendChild(actionTd);
-        tbody.appendChild(tr);
+    function showEditForm(blog) {
+      blogDetailsElem.innerHTML = `
+        <h2>Edit Blog</h2>
+        <form id="editBlogForm">
+          <label>Author:<br />
+            <input type="text" name="author" value="${escapeHtml(blog.author)}" required />
+          </label><br /><br />
+          <label>Title:<br />
+            <input type="text" name="title" value="${escapeHtml(blog.title)}" required />
+          </label><br /><br />
+          <label>Content:<br />
+            <textarea name="content" rows="5" required>${escapeHtml(blog.content)}</textarea>
+          </label><br /><br />
+          <label>Category:<br />
+            <input type="text" name="category" value="${escapeHtml(blog.category)}" required />
+          </label><br /><br />
+          <label>Release Date:<br />
+            <input type="date" name="releaseDate" value="${escapeHtml(blog.releaseDate)}" required />
+          </label><br /><br />
+          <label>Last Modified Date:<br />
+            <input type="date" name="lastmoddate" value="${escapeHtml(blog.lastmoddate)}" required />
+          </label><br /><br />
+          <button type="submit">Save Changes</button>
+          <button type="button" id="cancelEditBtn" style="margin-left:10px;">Cancel</button>
+        </form>
+      `;
+
+      document.getElementById('cancelEditBtn').addEventListener('click', () => {
+        selectBlog(blog);
+      });
+
+      document.getElementById('editBlogForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData(e.target);
+        const updatedData = {
+          author: formData.get('author'),
+          title: formData.get('title'),
+          content: formData.get('content'),
+          category: formData.get('category'),
+          releaseDate: formData.get('releaseDate'),
+          lastmoddate: formData.get('lastmoddate'),
+        };
+
+        await modifyBlog(blog.id, updatedData);
+      });
+    }
+    
+    async function modifyBlog(id, updatedData) {
+      try {
+        const res = await fetch(`${API_URL}/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updatedData),
+        });
+        if (!res.ok) throw new Error('Failed to update blog');
+        alert('Blog updated successfully!');
+
+        await loadBlogs(); 
+
+        const updatedBlog = await res.json();
+        selectBlog(updatedBlog);  
+
+      } catch (error) {
+        alert('Error updating blog.');
+        console.error(error);
+      }
+    }
+
+    document.getElementById('deleteBtn').addEventListener('click', () => {
+        deleteBlog(blog.id);
       });
     }
 
-    document.getElementById('addAlbumForm').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const band = document.getElementById('bandInput').value.trim();
-  const title = document.getElementById('titleInput').value.trim();
-  const authors = document.getElementById('authorsInput').value.trim();
-  const releaseDate = document.getElementById('releaseDateInput').value.trim();
-
-  if (!band || !title || !authors || !releaseDate) {
-    alert("Please fill out all fields.");
-    return;
-  }
-
-  const authorsArray = authors.split(',').map(a => a.trim()); 
-
-  try {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ band, title, authors: authorsArray, releaseDate })
-    });
-
-    if (res.ok) {
-      loadAlbums();
-      document.getElementById('addAlbumForm').reset();
-    } else {
-      const error = await res.json();
-      alert("Failed to add album: " + error.message); 
-    }
-  } catch (error) {
-    console.error('Error adding album:', error);
-    alert("Error adding album.");
-  }
-});
-
-
-    async function editAlbum(id, album) {
-      editingId = id;
-
-      document.getElementById('editAlbumForm').style.display = 'block';
-      document.getElementById('editBandInput').value = album.band;
-      document.getElementById('editTitleInput').value = album.title;
-      document.getElementById('editAuthorsInput').value = album.authors;
-      document.getElementById('editReleaseDateInput').value = album.releaseDate;
-    }
-
-    document.getElementById('editAlbumForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const band = document.getElementById('editBandInput').value.trim();
-      const title = document.getElementById('editTitleInput').value.trim();
-      const authors = document.getElementById('editAuthorsInput').value.trim();
-      const releaseDate = document.getElementById('editReleaseDateInput').value.trim();
-
-      if (!band || !title || !authors || !releaseDate) {
-        alert("Please fill out all fields.");
-        return;
+    async function deleteBlog(id) {
+      if (!confirm('Are you sure you want to delete this blog?')) return;
+      try {
+        const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        if (!res.ok) throw new Error('Failed to delete');
+        alert('Blog deleted successfully!');
+        selectedBlogId = null;
+        blogDetailsElem.innerHTML = '<h2>Select a blog from the list</h2><p>Details will appear here.</p>';
+        loadBlogs();
+      } catch (error) {
+        alert('Error deleting blog.');
+        console.error(error);
       }
+    }
 
-      const res = await fetch(`${API_URL}/${editingId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ band, title, authors, releaseDate })
+    function escapeHtml(text) {
+      return text
+        ? text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")
+        : '';
+    }
+
+    const addNewBtn = document.getElementById('addNewBtn');
+    
+    addNewBtn.addEventListener('click', () => {
+      showAddForm();
+    });
+    
+    function showAddForm() {
+      blogDetailsElem.innerHTML = `
+        <h2>Add New Blog</h2>
+        <form id="addBlogForm">
+          <label>
+            Author:<br />
+            <input type="text" name="author" required />
+          </label><br /><br />
+          <label>
+            Title:<br />
+            <input type="text" name="title" required />
+          </label><br /><br />
+          <label>
+            Content:<br />
+            <textarea name="content" rows="5" required></textarea>
+          </label><br /><br />
+          <label>
+            Category:<br />
+            <input type="text" name="category" required />
+          </label><br /><br />
+          <label>
+            Release Date:<br />
+            <input type="date" name="releaseDate" required />
+          </label><br /><br />
+          <label>
+            Last Modified Date:<br />
+            <input type="date" name="lastmoddate" required />
+          </label><br /><br />
+          <button type="submit">Create Blog</button>
+          <button type="button" id="cancelAddBtn" style="margin-left:10px;">Cancel</button>
+        </form>
+      `;
+    
+      const form = document.getElementById('addBlogForm');
+      const cancelBtn = document.getElementById('cancelAddBtn');
+    
+      cancelBtn.addEventListener('click', () => {
+        blogDetailsElem.innerHTML = '<h2>Select a blog from the list</h2><p>Details will appear here.</p>';
       });
-
-      if (res.ok) {
-        document.getElementById('editAlbumForm').reset();
-        document.getElementById('editAlbumForm').style.display = 'none';
-        loadAlbums();
-      } else {
-        alert("Failed to save changes.");
-      }
-    });
-
-    async function deleteAlbum(id) {
-      if (!confirm("Are you sure you want to delete this album?")) return;
-
-      const res = await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
-
-      if (res.ok) {
-        loadAlbums();
-      } else {
-        alert("Failed to delete album.");
-      }
+    
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+    
+        const newBlog = {
+          author: formData.get('author'),
+          title: formData.get('title'),
+          content: formData.get('content'),
+          category: formData.get('category'),
+          releaseDate: formData.get('releaseDate'),
+          lastmoddate: formData.get('lastmoddate'),
+        };
+    
+        try {
+          const res = await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newBlog),
+          });
+    
+          if (!res.ok) throw new Error('Failed to create blog');
+          alert('Blog created successfully!');
+          loadBlogs();
+          blogDetailsElem.innerHTML = '<h2>Select a blog from the list</h2><p>Details will appear here.</p>';
+        } catch (err) {
+          alert('Error creating blog.');
+          console.error(err);
+        }
+      });
     }
+    loadBlogs();
 
-    loadAlbums();
   </script>
 </body>
 </html>
